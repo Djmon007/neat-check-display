@@ -2,18 +2,20 @@ export interface ReportData {
   property: { name: string; unit: string; address: string };
   stay: { checkout: string; readyBy: string };
   generatedAt: string;
-  preparedBy: { name: string; team: string };
+  preparedBy: { name: string; role: string; team: string };
   workOrderId: string;
   status: "ready" | "exceptions" | "not-ready";
   checklist: { completed: number; total: number };
   issueCount: { total: number; urgent: number; normal: number; fyi: number };
   photosUploaded: number;
+  beforeAfterPairs: number;
   timeOnSite: string;
   suppliesRestocked: boolean;
   issues: Issue[];
   rooms: Room[];
   supplies: Supply[];
   signOff: SignOff;
+  auditLog: AuditEntry[];
 }
 
 export interface Issue {
@@ -24,6 +26,7 @@ export interface Issue {
   linkedTask: string;
   description: string;
   photos: string[];
+  tags: string[];
   suggestedAction: string;
   status: "new" | "acknowledged" | "resolved";
   recommendation: string;
@@ -43,63 +46,82 @@ export interface Room {
   name: string;
   icon: string;
   items: ChecklistItem[];
-  beforePhoto: string;
-  afterPhoto: string;
-  photoTimestamp: string;
+  photos: RoomPhoto[];
+}
+
+export interface RoomPhoto {
+  src: string;
+  thumbnail: string;
+  fullRes: string;
+  caption: string;
+  timestamp: string;
   photographer: string;
 }
 
 export interface Supply {
   item: string;
+  location: string;
   quantity: number;
   status: "restocked" | "low" | "out";
 }
 
 export interface SignOff {
   completedBy: string;
+  role: string;
   verifiedBy: string;
   confirmed: boolean;
+  signedAt: string;
   startTime: string;
   endTime: string;
 }
 
-// Placeholder photos using generated gradients
-const placeholderPhoto = (seed: number, label: string) =>
-  `https://images.unsplash.com/photo-${seed}?w=800&h=600&fit=crop&auto=format`;
+export interface AuditEntry {
+  time: string;
+  event: string;
+}
 
-// Using real Unsplash photos for the demo
 const PHOTOS = {
-  kitchenBefore: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop",
   kitchenAfter: "https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=800&h=600&fit=crop",
-  livingBefore: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop",
   livingAfter: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop",
-  bath1Before: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&h=600&fit=crop",
   bath1After: "https://images.unsplash.com/photo-1620626011761-996317b8d101?w=800&h=600&fit=crop",
-  bedroomBefore: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=600&fit=crop",
   bedroomAfter: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&h=600&fit=crop",
   crackedTile: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&h=600&fit=crop",
   stain: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop",
   towels: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop",
+  kitchenCounter: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop",
+  bathMirror: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&h=600&fit=crop",
+  bedroomBed: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=600&fit=crop",
+  livingCouch: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop",
 };
+
+const makePhoto = (src: string, caption: string, timestamp: string, photographer = "Maria S."): RoomPhoto => ({
+  src,
+  thumbnail: src,
+  fullRes: src.replace("w=800", "w=2400").replace("h=600", "h=1800"),
+  caption,
+  timestamp,
+  photographer,
+});
 
 export const mockReport: ReportData = {
   property: {
-    name: "Sunset Cove Villa",
-    unit: "Unit 304",
-    address: "1842 Ocean Blvd, Santa Monica, CA 90401",
+    name: "Villa Sunrise",
+    unit: "#204 — Oceanview Suite",
+    address: "1204 Coral Way, Miami Beach, FL",
   },
   stay: {
-    checkout: "Feb 25, 2026 · 11:00 AM",
-    readyBy: "Feb 25, 2026 · 3:00 PM",
+    checkout: "Jun 14, 2025 · 10:00 AM",
+    readyBy: "Jun 14, 2025 · 2:00 PM",
   },
-  generatedAt: "Feb 25, 2026 · 3:12 PM",
-  preparedBy: { name: "Maria Santos", team: "CleanStay Pro Services" },
-  workOrderId: "WO-2026-0458",
+  generatedAt: "Jun 14, 2025 · 11:42 AM",
+  preparedBy: { name: "Maria Santos", role: "Senior Housekeeper", team: "CleanCo Property Services" },
+  workOrderId: "WO-2024-08471",
   status: "exceptions",
-  checklist: { completed: 47, total: 52 },
+  checklist: { completed: 49, total: 52 },
   issueCount: { total: 3, urgent: 1, normal: 2, fyi: 0 },
-  photosUploaded: 18,
-  timeOnSite: "2h 15m",
+  photosUploaded: 22,
+  beforeAfterPairs: 8,
+  timeOnSite: "2h 18m",
   suppliesRestocked: true,
   issues: [
     {
@@ -107,10 +129,11 @@ export const mockReport: ReportData = {
       priority: "urgent",
       category: "Maintenance",
       location: "Bathroom 1",
-      linkedTask: "Inspect tub surround",
-      description: "Cracked tile near tub base, approximately 4×4 inches. Grout is deteriorating and moisture may be getting behind the tile.",
+      linkedTask: "Cracked tile near tub",
+      description: "A hairline crack runs ~4 inches along the second tile from the tub edge. Potential for water ingress. Recommend maintenance visit before next check-in.",
       photos: [PHOTOS.crackedTile],
-      suggestedAction: "Maintenance visit needed",
+      tags: ["MAINTENANCE", "BATHROOM 1", "TILE/GROUT"],
+      suggestedAction: "Schedule tile repair immediately",
       status: "new",
       recommendation: "Replace tile and re-grout surrounding area before next guest.",
     },
@@ -119,9 +142,10 @@ export const mockReport: ReportData = {
       priority: "normal",
       category: "Deep clean needed",
       location: "Living Room",
-      linkedTask: "Inspect sofa & cushions",
+      linkedTask: "Sofa stain on armrest",
       description: "Small stain on sofa armrest, approximately 2 inches. Attempted spot clean — partially removed.",
       photos: [PHOTOS.stain],
+      tags: ["UPHOLSTERY", "LIVING ROOM"],
       suggestedAction: "Schedule professional upholstery cleaning",
       status: "new",
       recommendation: "Monitor after next clean; schedule deep clean if stain persists.",
@@ -131,9 +155,10 @@ export const mockReport: ReportData = {
       priority: "normal",
       category: "Missing item",
       location: "Bathroom 1",
-      linkedTask: "Replace towel set",
+      linkedTask: "Bath towel set incomplete",
       description: "Bath towel set incomplete — only 2 of 4 bath towels available in linen closet. Hand towels OK.",
       photos: [PHOTOS.towels],
+      tags: ["LINENS", "BATHROOM 1"],
       suggestedAction: "Replace missing towels",
       status: "new",
       recommendation: "Restock 2 bath towels from inventory.",
@@ -157,10 +182,10 @@ export const mockReport: ReportData = {
         { name: "Replace dish sponge", status: "complete", completedAt: "1:45 PM", markedBy: "Maria S." },
         { name: "Check paper towels", status: "complete", completedAt: "1:46 PM", markedBy: "Maria S." },
       ],
-      beforePhoto: PHOTOS.kitchenBefore,
-      afterPhoto: PHOTOS.kitchenAfter,
-      photoTimestamp: "Feb 25, 2026 · 1:46 PM",
-      photographer: "Maria S.",
+      photos: [
+        makePhoto(PHOTOS.kitchenAfter, "Kitchen counters cleaned", "Jun 14, 2025 · 1:46 PM"),
+        makePhoto(PHOTOS.kitchenCounter, "Kitchen sink area", "Jun 14, 2025 · 1:46 PM"),
+      ],
     },
     {
       name: "Living Room",
@@ -175,10 +200,10 @@ export const mockReport: ReportData = {
         { name: "Check remotes & batteries", status: "complete", completedAt: "2:09 PM", markedBy: "Maria S." },
         { name: "Wipe light switches", status: "complete", completedAt: "2:10 PM", markedBy: "Maria S." },
       ],
-      beforePhoto: PHOTOS.livingBefore,
-      afterPhoto: PHOTOS.livingAfter,
-      photoTimestamp: "Feb 25, 2026 · 2:10 PM",
-      photographer: "Maria S.",
+      photos: [
+        makePhoto(PHOTOS.livingAfter, "Living room complete", "Jun 14, 2025 · 2:10 PM"),
+        makePhoto(PHOTOS.livingCouch, "Sofa area", "Jun 14, 2025 · 2:10 PM"),
+      ],
     },
     {
       name: "Bathroom 1",
@@ -196,48 +221,54 @@ export const mockReport: ReportData = {
         { name: "Clean exhaust fan", status: "complete", completedAt: "2:34 PM", markedBy: "Maria S." },
         { name: "Check plumbing for leaks", status: "complete", completedAt: "2:35 PM", markedBy: "Maria S." },
       ],
-      beforePhoto: PHOTOS.bath1Before,
-      afterPhoto: PHOTOS.bath1After,
-      photoTimestamp: "Feb 25, 2026 · 2:35 PM",
-      photographer: "Maria S.",
+      photos: [
+        makePhoto(PHOTOS.bath1After, "Bathroom cleaned", "Jun 14, 2025 · 2:35 PM"),
+        makePhoto(PHOTOS.bathMirror, "Mirror and vanity", "Jun 14, 2025 · 2:35 PM"),
+      ],
     },
     {
       name: "Master Bedroom",
       icon: "🛏️",
       items: [
-        { name: "Change bed linens", status: "complete", completedAt: "2:40 PM", markedBy: "Maria S." },
-        { name: "Make bed to standard", status: "complete", completedAt: "2:45 PM", markedBy: "Maria S." },
-        { name: "Vacuum floors", status: "complete", completedAt: "2:48 PM", markedBy: "Maria S." },
-        { name: "Dust nightstands & dresser", status: "complete", completedAt: "2:50 PM", markedBy: "Maria S." },
-        { name: "Clean windows", status: "complete", completedAt: "2:52 PM", markedBy: "Maria S." },
-        { name: "Check closet & hangers", status: "complete", completedAt: "2:54 PM", markedBy: "Maria S." },
-        { name: "Inspect mattress protector", status: "complete", completedAt: "2:55 PM", markedBy: "Maria S." },
-        { name: "Wipe light switches & outlets", status: "complete", completedAt: "2:56 PM", markedBy: "Maria S." },
-        { name: "Check alarm clock", status: "complete", completedAt: "2:57 PM", markedBy: "Maria S." },
-        { name: "Place welcome materials", status: "complete", completedAt: "2:58 PM", markedBy: "Maria S." },
-        { name: "Final room inspection", status: "complete", completedAt: "3:00 PM", markedBy: "Maria S." },
+        { name: "Strip and remake bed with fresh linens", status: "complete", completedAt: "11:10 AM", markedBy: "Maria S." },
+        { name: "Dust all surfaces and furniture", status: "complete", completedAt: "11:14 AM", markedBy: "Maria S." },
+        { name: "Vacuum carpet / mop hardwood", status: "complete", completedAt: "11:18 AM", markedBy: "Maria S." },
+        { name: "Wipe mirrors and glass surfaces", status: "complete", completedAt: "11:19 AM", markedBy: "Maria S." },
+        { name: "Empty trash", status: "complete", completedAt: "11:20 AM", markedBy: "Maria S." },
+        { name: "Stage decorative pillows", status: "complete", completedAt: "11:21 AM", markedBy: "Maria S." },
+        { name: "Check closet / hangers", status: "complete", completedAt: "11:22 AM", markedBy: "Maria S." },
+        { name: "Wipe light switches and outlets", status: "complete", completedAt: "11:23 AM", markedBy: "Maria S." },
+        { name: "Check under bed", status: "complete", completedAt: "11:24 AM", markedBy: "Maria S." },
       ],
-      beforePhoto: PHOTOS.bedroomBefore,
-      afterPhoto: PHOTOS.bedroomAfter,
-      photoTimestamp: "Feb 25, 2026 · 3:00 PM",
-      photographer: "Maria S.",
+      photos: [
+        makePhoto(PHOTOS.bedroomAfter, "Bedroom complete", "Jun 14, 2025 · 11:24 AM"),
+        makePhoto(PHOTOS.bedroomBed, "Bed made to standard", "Jun 14, 2025 · 11:24 AM"),
+      ],
     },
   ],
   supplies: [
-    { item: "Paper towel rolls", quantity: 2, status: "restocked" },
-    { item: "Toilet paper rolls", quantity: 4, status: "restocked" },
-    { item: "Hand soap refills", quantity: 1, status: "restocked" },
-    { item: "Coffee pods (variety)", quantity: 12, status: "restocked" },
-    { item: "Dishwasher pods", quantity: 0, status: "low" },
-    { item: "Bath towels", quantity: 0, status: "out" },
-    { item: "Trash bags", quantity: 3, status: "restocked" },
-    { item: "Shampoo bottles", quantity: 2, status: "restocked" },
+    { item: "Toilet Paper", location: "Bathroom 1 + 2", quantity: 4, status: "restocked" },
+    { item: "Paper Towels", location: "Kitchen", quantity: 2, status: "restocked" },
+    { item: "Hand Soap", location: "All baths", quantity: 1, status: "restocked" },
+    { item: "Bath Mat", location: "Master Bath", quantity: 1, status: "restocked" },
+    { item: "Coffee Pods", location: "Kitchen", quantity: 6, status: "restocked" },
+    { item: "Dishwasher Pods", location: "Kitchen", quantity: 0, status: "low" },
   ],
   signOff: {
     completedBy: "Maria Santos",
+    role: "Senior Housekeeper · CleanCo",
     verifiedBy: "Carlos Rivera (Supervisor)",
     confirmed: true,
-    startTime: "12:45 PM",
-    endTime: "3:00 PM",
+    signedAt: "Jun 14, 2025 · 11:40 AM",
+    startTime: "8:30 AM",
+    endTime: "11:40 AM",
   },
+  auditLog: [
+    { time: "8:30 AM", event: "Arrived on site. Work order opened." },
+    { time: "8:52 AM", event: "Issue #1 logged — cracked tile (urgent)." },
+    { time: "10:38 AM", event: "Issue #2 logged — sofa stain." },
+    { time: "10:18 AM", event: "Issue #3 logged — pods low stock." },
+    { time: "11:40 AM", event: "Report finalized. Digital signature applied." },
+    { time: "11:42 AM", event: "Report link generated." },
+  ],
 };

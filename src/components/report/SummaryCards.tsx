@@ -1,85 +1,72 @@
 import { ReportData } from "@/data/mockReport";
-import { CheckCircle, AlertTriangle, XCircle, Camera, Clock, Package } from "lucide-react";
+import { CheckCircle, AlertTriangle, AlertCircle, Camera, Image } from "lucide-react";
 
 interface Props {
   data: ReportData;
 }
 
-const statusConfig = {
-  ready: { label: "Ready", icon: CheckCircle, colorClass: "bg-status-ready-bg text-status-ready border-status-ready/20" },
-  exceptions: { label: "Ready with Exceptions", icon: AlertTriangle, colorClass: "bg-status-warning-bg text-status-warning border-status-warning/20" },
-  "not-ready": { label: "Not Ready", icon: XCircle, colorClass: "bg-status-critical-bg text-status-critical border-status-critical/20" },
-};
-
 const SummaryCards = ({ data }: Props) => {
-  const s = statusConfig[data.status];
-  const StatusIcon = s.icon;
   const pct = Math.round((data.checklist.completed / data.checklist.total) * 100);
 
-  const cards = [
+  const stats = [
     {
-      label: "Overall Status",
-      value: s.label,
-      icon: <StatusIcon className="w-5 h-5" />,
-      className: s.colorClass,
+      icon: <CheckCircle className="w-5 h-5 text-status-ready" />,
+      value: data.checklist.completed,
+      sub: <span className="text-muted-foreground text-[10px] uppercase">/ {data.checklist.total}</span>,
+      label: "Completed",
     },
     {
-      label: "Checklist",
-      value: `${data.checklist.completed}/${data.checklist.total}`,
-      sub: `${pct}% complete`,
-      icon: <CheckCircle className="w-5 h-5" />,
-      className: pct === 100
-        ? "bg-status-ready-bg text-status-ready border-status-ready/20"
-        : "bg-status-warning-bg text-status-warning border-status-warning/20",
+      icon: <AlertTriangle className="w-5 h-5 text-status-warning" />,
+      value: data.issueCount.total,
+      label: "Issues",
+      accent: true,
     },
     {
-      label: "Issues Logged",
-      value: `${data.issueCount.total}`,
-      sub: data.issueCount.urgent > 0 ? `${data.issueCount.urgent} urgent` : "None urgent",
-      icon: <AlertTriangle className="w-5 h-5" />,
-      className: data.issueCount.urgent > 0
-        ? "bg-status-critical-bg text-status-critical border-status-critical/20"
-        : "bg-status-warning-bg text-status-warning border-status-warning/20",
+      icon: <AlertCircle className="w-5 h-5 text-status-critical" />,
+      value: data.issueCount.urgent,
+      label: "Urgent",
+      accent: data.issueCount.urgent > 0,
     },
     {
+      icon: <Camera className="w-5 h-5 text-muted-foreground" />,
+      value: data.photosUploaded,
       label: "Photos",
-      value: `${data.photosUploaded}`,
-      sub: "uploaded",
-      icon: <Camera className="w-5 h-5" />,
-      className: "bg-status-info-bg text-status-info border-status-info/20",
     },
     {
-      label: "Time on Site",
-      value: data.timeOnSite,
-      icon: <Clock className="w-5 h-5" />,
-      className: "bg-secondary text-secondary-foreground border-border",
-    },
-    {
-      label: "Supplies",
-      value: data.suppliesRestocked ? "Restocked" : "Pending",
-      icon: <Package className="w-5 h-5" />,
-      className: data.suppliesRestocked
-        ? "bg-status-ready-bg text-status-ready border-status-ready/20"
-        : "bg-status-warning-bg text-status-warning border-status-warning/20",
+      icon: <Image className="w-5 h-5 text-muted-foreground" />,
+      value: data.beforeAfterPairs,
+      label: "B/A Pairs",
     },
   ];
 
   return (
-    <section>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {cards.map((card) => (
-          <div
-            key={card.label}
-            className={`report-card rounded-lg border p-4 ${card.className}`}
-          >
-            <div className="flex items-center gap-2 mb-2 opacity-80">
-              {card.icon}
-              <span className="text-xs font-medium uppercase tracking-wide">{card.label}</span>
+    <section className="report-card border border-report-section-border rounded-lg p-4">
+      <div className="flex flex-wrap items-center gap-6 md:gap-8">
+        {stats.map((s) => (
+          <div key={s.label} className="flex items-center gap-2">
+            {s.icon}
+            <div className="leading-tight">
+              <div className="text-xl font-bold text-foreground">
+                {s.value} {s.sub}
+              </div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{s.label}</div>
             </div>
-            <div className="text-xl font-bold leading-tight">{card.value}</div>
-            {card.sub && <div className="text-xs mt-0.5 opacity-70">{card.sub}</div>}
           </div>
         ))}
+
+        {/* Progress bar */}
+        <div className="flex-1 min-w-[160px] ml-auto">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <span>Checklist Progress</span>
+            <span className="font-semibold text-foreground">{pct}%</span>
+          </div>
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-status-ready rounded-full transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
       </div>
     </section>
   );
