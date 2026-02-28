@@ -1,52 +1,46 @@
-import { SignOff } from "@/data/mockReport";
-import { ShieldCheck, Clock, User, CheckSquare } from "lucide-react";
+import { SignOff, AuditEntry } from "@/data/mockReport";
+import { ShieldCheck } from "lucide-react";
 
 interface Props {
   signOff: SignOff;
+  auditLog: AuditEntry[];
 }
 
-const SignOffSection = ({ signOff }: Props) => {
+const SignOffSection = ({ signOff, auditLog }: Props) => {
   return (
-    <section>
-      <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-        <ShieldCheck className="w-5 h-5 text-primary" />
-        Sign-Off & Audit Trail
-      </h2>
+    <div className="space-y-4">
+      {/* Digital signature card */}
       <div className="report-card border border-report-section-border rounded-lg p-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div className="flex items-start gap-3">
-            <User className="w-4 h-4 text-muted-foreground mt-0.5" />
-            <div>
-              <div className="text-muted-foreground text-xs uppercase tracking-wide">Completed By</div>
-              <div className="font-semibold text-foreground">{signOff.completedBy}</div>
-            </div>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+            {signOff.completedBy.split(" ").map(n => n[0]).join("")}
           </div>
-          <div className="flex items-start gap-3">
-            <User className="w-4 h-4 text-muted-foreground mt-0.5" />
-            <div>
-              <div className="text-muted-foreground text-xs uppercase tracking-wide">Verified By</div>
-              <div className="font-semibold text-foreground">{signOff.verifiedBy}</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Clock className="w-4 h-4 text-muted-foreground mt-0.5" />
-            <div>
-              <div className="text-muted-foreground text-xs uppercase tracking-wide">Work Window</div>
-              <div className="font-semibold text-foreground">{signOff.startTime} — {signOff.endTime}</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <CheckSquare className="w-4 h-4 text-status-ready mt-0.5" />
-            <div>
-              <div className="text-muted-foreground text-xs uppercase tracking-wide">Confirmation</div>
-              <div className="font-semibold text-status-ready">
-                {signOff.confirmed ? "✓ Tasks completed to standard" : "Pending confirmation"}
-              </div>
-            </div>
+          <div>
+            <div className="font-bold text-foreground">{signOff.completedBy}</div>
+            <div className="text-xs text-muted-foreground">{signOff.role}</div>
           </div>
         </div>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-status-ready-bg text-status-ready rounded-full text-xs font-medium">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          ✓ Digitally signed · {signOff.signedAt}
+        </div>
       </div>
-    </section>
+
+      {/* Audit log */}
+      <div className="report-card border border-report-section-border rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-report-section-border">
+          <h3 className="font-bold text-foreground text-sm uppercase tracking-wide">Audit Log</h3>
+        </div>
+        <div className="divide-y divide-report-section-border">
+          {auditLog.map((entry, i) => (
+            <div key={i} className="flex gap-4 px-4 py-2.5 text-sm">
+              <span className="text-muted-foreground font-mono text-xs w-16 shrink-0 pt-0.5">{entry.time}</span>
+              <span className="text-foreground">{entry.event}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 
